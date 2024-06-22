@@ -18,7 +18,6 @@ struct tm td;
 int fd;
 int i;
 time_t t1;
-time_t t2;
 
 int main()
 {
@@ -33,16 +32,9 @@ int main()
 				break;
 			}
 		}
-		dprintf(STDOUT_FILENO, "%s%% %d-%02d-%02d %02d:%02d:%02d\n",
-			buf,
-			td.tm_year + 1900,
-			td.tm_mon + 1,
-			td.tm_mday, td.tm_hour, td.tm_min, td.tm_sec);
+		dprintf(STDOUT_FILENO, "%s%% %d-%02d-%02d %02d:%02d:%02d\n", buf, td.tm_year + 1900, td.tm_mon + 1, td.tm_mday, td.tm_hour, td.tm_min, td.tm_sec);
 		t = (t + 1) * 1000000;
-		for (t1 = time(NULL) * 1000000; t1 < t;
-		     t1 = time(NULL) * 1000000) {
-			t2 = t - t1;
-			usleep(t2);
-		}
+		for (t1 = time(NULL) * 1000000; t1 < t; t1 = time(NULL) * 1000000)
+			usleep(t - t1);
 	}
 }
