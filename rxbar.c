@@ -10,13 +10,13 @@
 #include <fcntl.h>
 #include <stdint.h>
 
-#define LEN 10
+#define MAXLEN 4
 
 time_t t;
-char buf[LEN];
+char buf[MAXLEN];
+size_t len;
 struct tm td;
 int fd;
-int i;
 time_t t1;
 
 int main()
@@ -25,13 +25,8 @@ int main()
 	for (;;) {
 		t = time(NULL);
 		td = *localtime(&t);
-		pread(fd, buf, LEN, 0);
-		for (i = 0; i < LEN; ++i) {
-			if (buf[i] == '\n') {
-				buf[i] = '\0';
-				break;
-			}
-		}
+		len = pread(fd, buf, MAXLEN, 0);
+		buf[len - 1] = '\0';
 		dprintf(STDOUT_FILENO, "%s%% %d-%02d-%02d %02d:%02d:%02d\n", buf, td.tm_year + 1900, td.tm_mon + 1, td.tm_mday, td.tm_hour, td.tm_min, td.tm_sec);
 		t = (t + 1) * 1000000;
 		for (t1 = time(NULL) * 1000000; t1 < t; t1 = time(NULL) * 1000000)
