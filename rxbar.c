@@ -13,7 +13,7 @@
 #define MAXLEN 4
 
 time_t t;
-char buf[MAXLEN + 1];
+char buf[MAXLEN + 2];
 size_t len;
 struct tm td;
 int fdc, fds;
