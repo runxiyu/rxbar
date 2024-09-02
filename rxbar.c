@@ -10,24 +10,27 @@
 #include <fcntl.h>
 #include <stdint.h>
 
-#define MAXLEN 4
+#define MAXLEN 7
 
 time_t t;
 char buf[MAXLEN + 2];
-size_t len;
+char buf2[MAXLEN + 2];
+size_t len, len2;
 struct tm td;
-int fdc, fds;
+int fdt, fds, fdc;
 time_t t1;
 
 int main()
 {
+	fdt = open("/sys/class/power_supply/macsmc-battery/time_to_empty_now", O_RDONLY);
 	fdc = open("/sys/class/power_supply/macsmc-battery/capacity", O_RDONLY);
 	fds = open("/sys/class/power_supply/macsmc-battery/status", O_RDONLY);
-	if (fdc == -1 || fds == -1) {
+	if (fdt == -1 || fds == -1) {
+		fdt = open("/sys/class/power_supply/BAT0/time_to_empty_now", O_RDONLY);
 		fdc = open("/sys/class/power_supply/BAT0/capacity", O_RDONLY);
 		fds = open("/sys/class/power_supply/BAT0/status", O_RDONLY);
 	}
-	if (fdc == -1 || fds == -1) {
+	if (fdt == -1 || fds == -1) {
 		// no battery
 		for (;;) {
 			t = time(NULL);
@@ -52,10 +55,13 @@ int main()
 		td = *localtime(&t);
 		len = pread(fdc, buf + 1, MAXLEN, 0);
 		pread(fds, buf, 1, 0);
+		len2 = pread(fdt, buf2, MAXLEN, 0);
 		buf[len] = '\0';
+		buf2[len2-1] = '\0';
 		dprintf(STDOUT_FILENO,
-			"%s %d-%02d-%02d %02d:%02d:%02d\n",
+			"%s.%s %d-%02d-%02d %02d:%02d:%02d\n",
 			buf,
+			buf2,
 			td.tm_year + 1900,
 			td.tm_mon + 1,
 			td.tm_mday,
