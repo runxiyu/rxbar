@@ -101,6 +101,11 @@ cJSON *component_battery(void) {
 		battery_caution = 1;
 	}
 
+	if (battery_status == 'N') {
+		battery_caution = 1;
+		cJSON_AddStringToObject(json_obj, "color", COLOR_CAUTION);
+	}
+
 	free(battery_text);
 	return json_obj;
 }
@@ -121,7 +126,7 @@ cJSON *component_clock(void) {
 cJSON *component_warning(void) {
 	cJSON *json_obj = cJSON_CreateObject();
 
-	if (master_warning) {
+	if (battery_warning) { // EDIT
 		cJSON_AddStringToObject(json_obj, "full_text", "WARNING");
 		cJSON_AddStringToObject(json_obj, "color", COLOR_WARNING);
 		return json_obj;
@@ -133,18 +138,13 @@ cJSON *component_warning(void) {
 cJSON *component_caution(void) {
 	cJSON *json_obj = cJSON_CreateObject();
 
-	if (master_caution) {
+	if (battery_caution) { // EDIT
 		cJSON_AddStringToObject(json_obj, "full_text", "CAUTION");
 		cJSON_AddStringToObject(json_obj, "color", COLOR_CAUTION);
 		return json_obj;
 	}
 
 	return NULL;
-}
-
-void update_warning_cautions(void) {
-	master_warning = battery_warning;
-	master_caution = battery_caution;
 }
 
 int main(void) {
@@ -159,8 +159,6 @@ int main(void) {
 
 		cJSON_AddItemToArray(json_array, component_battery());
 		cJSON_AddItemToArray(json_array, component_clock());
-
-		update_warning_cautions();
 
 		cJSON_AddItemToArray(json_array, component_warning());
 		cJSON_AddItemToArray(json_array, component_caution());
