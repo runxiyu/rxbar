@@ -9,6 +9,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <cjson/cJSON.h>
+#include <time.h>
 
 #define BATTERY_CAPACITY_PATH "/sys/class/power_supply/macsmc-battery/capacity"
 #define BATTERY_STATUS_PATH "/sys/class/power_supply/macsmc-battery/status"
@@ -28,6 +29,15 @@ int battery_capacity;
 char battery_status;
 _Bool battery_warning;
 _Bool battery_caution;
+
+void sleep_to_next_second(void) {
+	struct timespec ts;
+	clock_gettime(CLOCK_REALTIME, &ts);
+	ts.tv_sec += 1;
+	ts.tv_nsec = 0;
+
+	clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &ts, NULL);
+}
 
 int setup(void) {
 	battery_capacity_fd = open(BATTERY_CAPACITY_PATH, O_RDONLY);
@@ -95,6 +105,19 @@ cJSON *component_battery(void) {
 	return json_obj;
 }
 
+cJSON *component_clock(void) {
+	cJSON *json_obj = cJSON_CreateObject();
+
+	time_t t = time(NULL);
+	struct tm *tm = localtime(&t);
+	char *time_str = asctime(tm);
+	time_str[strlen(time_str) - 1] = '\0';
+	cJSON_AddStringToObject(json_obj, "full_text", time_str);
+	cJSON_AddStringToObject(json_obj, "color", COLOR_NORMAL);
+
+	return json_obj;
+}
+
 cJSON *component_warning(void) {
 	cJSON *json_obj = cJSON_CreateObject();
 
@@ -135,6 +158,7 @@ int main(void) {
 		cJSON *json_array = cJSON_CreateArray();
 
 		cJSON_AddItemToArray(json_array, component_battery());
+		cJSON_AddItemToArray(json_array, component_clock());
 
 		update_warning_cautions();
 
@@ -147,7 +171,8 @@ int main(void) {
 		json_string[json_string_len] = ',';
 		write(STDOUT_FILENO, json_string, json_string_len + 1);
 		free(json_string);
-		sleep(1);
+
+		sleep_to_next_second();
 	}
 
 	close(battery_capacity_fd);
