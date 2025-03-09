@@ -71,7 +71,6 @@ int setup(void) {
 		perror("failed to open battery capacity file");
 		return -1;
 	}
-	battery_charge_full = read_ll_from_fd(battery_charge_full_fd);
 	battery_charge_now_fd = open(BATTERY_CHARGE_NOW_PATH, O_RDONLY);
 	if (battery_charge_now_fd == -1) {
 		perror("failed to open battery capacity file");
@@ -109,6 +108,7 @@ cJSON *component_battery(void) {
 	battery_current = read_ll_from_fd(battery_current_fd);
 	battery_status = read_char_from_fd(battery_status_fd);
 	battery_charge_now = read_ll_from_fd(battery_charge_now_fd);
+	battery_charge_full = read_ll_from_fd(battery_charge_full_fd);
 
 	char *battery_text;
 	if (asprintf(&battery_text, "%c%.2f %lld", battery_status, ((double)(100*battery_charge_now))/battery_charge_full, battery_current/1000) == -1)
