@@ -51,11 +51,12 @@ void sleep_to_next_second(void) {
 }
 
 long long read_ll_from_fd(int fd) {
-	char buf[30];
+	char buf[30] = {0};
 	if (pread(fd, buf, sizeof(buf) - 1, 0) == -1) {
 		perror("failed to read int");
 		return -1;
 	}
+	strchr(buf, '\n')[0] = '\0';
 	return atoll(buf); // whatever for zeros
 }
 
