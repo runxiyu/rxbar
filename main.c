@@ -110,7 +110,7 @@ cJSON *component_battery(void) {
 	battery_charge_now = read_ll_from_fd(battery_charge_now_fd);
 
 	char *battery_text;
-	if (asprintf(&battery_text, "%c%.2f %lld", battery_status, (double)battery_charge_now/battery_charge_full*100, battery_current/1000) == -1)
+	if (asprintf(&battery_text, "%c%.2f %lld", battery_status, ((double)(100*battery_charge_now))/battery_charge_full, battery_current/1000) == -1)
 		return NULL;
 	
 	cJSON_AddStringToObject(json_obj, "full_text", battery_text);
