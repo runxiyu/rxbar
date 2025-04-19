@@ -15,6 +15,7 @@
 #define BATTERY_STATUS_PATH "/sys/class/power_supply/macsmc-battery/status"
 #define BATTERY_CURRENT_PATH "/sys/class/power_supply/macsmc-battery/current_now"
 #define BATTERY_CHARGE_MAX_PATH "/sys/class/power_supply/macsmc-battery/charge_full"
+#define BATTERY_CHARGE_MAX_DESIGN_PATH "/sys/class/power_supply/macsmc-battery/charge_full_design"
 #define BATTERY_CHARGE_NOW_PATH "/sys/class/power_supply/macsmc-battery/charge_now"
 
 #define COLOR_NORMAL "#aaaaaa"
@@ -24,6 +25,7 @@
 
 int battery_capacity_fd;
 int battery_charge_full_fd;
+int battery_charge_full_design_fd;
 int battery_charge_now_fd;
 int battery_status_fd;
 int battery_current_fd;
@@ -34,6 +36,7 @@ _Bool master_caution;
 long long battery_capacity;
 long long battery_current;
 long long battery_charge_full;
+long long battery_charge_full_design;
 long long battery_charge_now;
 char battery_status;
 _Bool battery_warning;
@@ -68,6 +71,11 @@ int setup(void) {
 	}
 	battery_charge_full_fd = open(BATTERY_CHARGE_MAX_PATH, O_RDONLY);
 	if (battery_charge_full_fd == -1) {
+		perror("failed to open battery capacity file");
+		return -1;
+	}
+	battery_charge_full_design_fd = open(BATTERY_CHARGE_MAX_DESIGN_PATH, O_RDONLY);
+	if (battery_charge_full_design_fd == -1) {
 		perror("failed to open battery capacity file");
 		return -1;
 	}
@@ -109,6 +117,7 @@ cJSON *component_battery(void) {
 	battery_status = read_char_from_fd(battery_status_fd);
 	battery_charge_now = read_ll_from_fd(battery_charge_now_fd);
 	battery_charge_full = read_ll_from_fd(battery_charge_full_fd);
+	battery_charge_full_design = read_ll_from_fd(battery_charge_full_design_fd);
 
 	char *battery_text;
 	if (asprintf(&battery_text, "%c%.2f %lld", battery_status, ((double)(100*battery_charge_now))/battery_charge_full, battery_current/1000) == -1)
@@ -140,6 +149,11 @@ cJSON *component_battery(void) {
 	if (battery_current < -620000) {
 		cJSON_AddStringToObject(json_obj, "color", COLOR_CAUTION);
 		battery_caution |= 1;
+	}
+
+	if (battery_charge_now > battery_charge_full_design) {
+		cJSON_AddStringToObject(json_obj, "color", COLOR_WARNING);
+		battery_warning |= 1;
 	}
 
 	free(battery_text);
