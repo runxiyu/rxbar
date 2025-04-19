@@ -3,6 +3,7 @@
  * SPDX-FileContributor: Runxi Yu <https://runxiyu.org>
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -109,6 +110,36 @@ char read_char_from_fd(int fd) {
 	return ret;
 }
 
+cJSON *component_todo(void) {
+	cJSON *json_obj = cJSON_CreateObject();
+	FILE *fp = fopen("TODO", "r");
+	if (!fp) {
+		cJSON_AddStringToObject(json_obj, "full_text", "TODO not found");
+		cJSON_AddStringToObject(json_obj, "color", COLOR_CAUTION);
+		return json_obj;
+	}
+
+	char line[1024] = {0};
+	if (fgets(line, sizeof(line), fp) == NULL) {
+		if (feof(fp)) {
+			/* Empty TODO */
+		} else {
+			cJSON_AddStringToObject(json_obj, "full_text", "Error reading TODO");
+			cJSON_AddStringToObject(json_obj, "color", COLOR_WARNING);
+		}
+		fclose(fp);
+		return json_obj;
+	}
+
+	char *newline = strchr(line, '\n');
+	if (newline) *newline = '\0';
+
+	cJSON_AddStringToObject(json_obj, "full_text", line);
+	cJSON_AddStringToObject(json_obj, "color", COLOR_NORMAL);
+	fclose(fp);
+	return json_obj;
+}
+
 cJSON *component_battery(void) {
 	cJSON *json_obj = cJSON_CreateObject();
 
@@ -208,6 +239,8 @@ int main(void) {
 
 	while (1) {
 		cJSON *json_array = cJSON_CreateArray();
+
+		cJSON_AddItemToArray(json_array, component_todo());
 
 		cJSON_AddItemToArray(json_array, component_battery());
 		cJSON_AddItemToArray(json_array, component_clock());
